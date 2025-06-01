@@ -33,13 +33,16 @@ class Params:
         self.numCalls = 0
         self.lossNumPackets = 0
         
-        # test
-        self.S = 10e9 / self.packetSize
-        # self.Psend = (self.S * self.Rai / self.tauprime * (1/self.B + 1/self.S/self.timer)**2)**(-1/3)
-        # self.Psend = (self.Rai / self.tauprime / (self.S**2) * ((1/self.B + 1/self.S/self.timer)**2))**(1/3)
+        # Proactively generate CNP
+        self.S = 80e9 / self.packetSize
         self.inner_term = (1/self.B) + (1/(self.S*self.timer))
         self.Psend = ( (self.Rai / (self.tauprime * self.S**2)) * (self.inner_term)**2 )**(1/3)
-
+        
+        self.S2 = 40e9 / self.packetSize
+        self.inner_term2 = (1/self.B) + (1/(self.S2*self.timer))
+        self.Psend2 = ( (self.Rai / (self.tauprime * self.S2**2)) * (self.inner_term2)**2 )**(1/3)
+        
+        
 params = Params()
 
 # History function (constant initial conditions)
@@ -72,8 +75,10 @@ def model(Y, t):
         if i == 0:
             p_ = min((p + params.Psend), 1)
             # p_ = p
+            # p_ = min((params.Psend), 1)
         else:
-            p_ = p
+            # p_ = p
+            p_ = min((p + params.Psend2), 1)
         a, b, c, d, e = intermediate_terms(p_, prevRC, currRC, i)
         dx[i] = rc_delta(currRC, currRT, currAlpha, prevRC, a, b, d)
         dx[i+1] = rt_delta(currRC, currRT, prevRC, a, c, e)
@@ -316,6 +321,7 @@ def plot_sol(t, queueS0, queueS1, lossPacketNum, rates, sim_length):
     plt.ylim(0, 1.1 * max_rate)
     plt.xlabel('Time (seconds)')
     plt.ylabel('Throughput (Gbps)')
+    plt.grid(True)
     plt.title('All Flows Throughput')
     plt.legend(loc='upper right')  # 添加图例
     
@@ -352,9 +358,9 @@ def plot_sol(t, queueS0, queueS1, lossPacketNum, rates, sim_length):
 
 # Main simulation
 def main():
-    sim_length = 0.5  # s    0.5
+    sim_length = 0.2  # s    0.5
     
-    t_eval = np.linspace(0, sim_length, 100000)         # 100000
+    t_eval = np.linspace(0, sim_length, 10000)         # 100000
     # t_eval = np.arange(0, sim_epoch) * params.taustar
     print(f"psend: ", params.Psend)
 
